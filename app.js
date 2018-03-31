@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 ;(() => {
   'use strict';
 
@@ -27,15 +29,19 @@
   const io = require('socket.io')(httpsServer)
   io.set('transports', ['websocket', 'polling']);
 
-  MongoClient.connect('mongodb://localhost:27017/trendify', function (err, db) {
+  MongoClient.connect('mongodb://localhost:27017/trendify', (err, db) => {
     assert.equal(err, null)
 
-    const cleanup = () => {
+    const cleanup = (code) => {
       db.close()
       process.exit(1)
     };
 
-    const api = require('./api')(db, io);
+    process.on('exit', () => cleanup(0));
+    process.on('SIGINT', () => cleanup(0));
+    process.on('uncaughtException', cleanup(1));
+
+    const api = require('./routes/api')(db, io);
 
     app.all(/^((?!(api|assets|fonts|torii|crossdomain\.xlm|robots\.txt|logo|index)).)*$/, function (req, res, next) {
       res.sendFile('./public/index.html', {root: __dirname});
@@ -43,15 +49,14 @@
 
     app.use(logger('dev'))
       .use(bodyParser.json())
-      .use(cors({
-        origin: 'http://localhost:4200'
-      }))
+      .use(cors({ origin: 'http://localhost:4200' }))
       .use(cookieParser())
       .use(bodyParser.urlencoded({ extended: false }))
       .use('/api/', api)
       .use(express.static('public'))
       .set('port', port)
   });
+
   httpSerer.listen(port);
   httpsServer.listen(443);
 

@@ -4,6 +4,7 @@
   "description": "hackathon project",
   "main": "index.js",
   "scripts": {
+    "start": "./app.js",
     "generate-key": "openssl req -newkey rsa:2048 -new -nodes -x509 -days 3650 -keyout .cert/key.pem -out .cert/cert.pem"
   },
   "repository": {
