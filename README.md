@@ -57,8 +57,8 @@ All API requests require request body including the following...
     - 200 - Success
       ```
       {
-        id: session.id,
-        access_pass: accessPass,
-        creator_id: session.
+        id:
+        access_pass,
+        creator_id
       }
       ```
