@@ -18,10 +18,12 @@
   },
   "homepage": "https://github.com/trendify-app/trendify-gateway#readme",
   "dependencies": {
+    "cookie-parser": "^1.4.3",
     "cors": "^2.8.4",
     "express": "^4.16.3",
     "jsonwebtoken": "^8.2.0",
     "mongodb": "^3.0.5",
+    "morgan": "^1.9.0",
     "socket.io": "^2.1.0"
   }
 }

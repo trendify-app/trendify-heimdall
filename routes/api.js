@@ -37,14 +37,9 @@
       validate(token).then(identity =>
         trendSessions.find({}).toArray((err, values) => {
           res.send(values.map(v => {
-            let r = {}
-            if (v.config.password) {
-              r.password_protected = true;
-            }
-            return Object.assign(r, {
+            return {
               _id: v._id,
-              name: v.name,
-              creatorId: v.creatorId
+              creator_id: v.creatorId
             })
           }))
         })
@@ -99,14 +94,13 @@
       validate(token)
         .then(identity => {
           trendSessions.insertOne({
-            name: body.name,
             accessPasses: [],
             persistedUsers: {},
             creatorId: result.id
           }).then(result => {
             const trendSessionId = result.insertedId;
             res.send({
-              room_id: trendSessionId;
+              room_id: trendSessionId
             })
           })
         }).catch(error => res.status(401).send(error));
@@ -119,7 +113,7 @@
       const params = req.params;
 
       const token = req.query.token;
-      const trendSessionId = params.sessionId;
+      const trendSessionId = params.session_id;
 
       validate(token)
         .then(identity => {
@@ -131,7 +125,7 @@
 
           const _query = {_id: new ObjectID(trendSessionId)}
 
-          roomSessions.findOne(_query, (error, record) => {
+          trendSessions.findOne(_query, (error, record) => {
             if (error) {
               res.status(401).send(error);
               return;
@@ -141,12 +135,19 @@
 
             record.accessPasses.push(accessPass);
 
-            trendSessions.update(query, record, (update_err) => {
+            trendSessions.update(query, session, (update_err) => {
               if (update_err) {
                 res.status(401).send(update_error);
                 return;
               }
-              res.send({ access_pass: accessPass });
+
+              const safeSession: {
+                id: session.id,
+                access_pass: accessPass,
+                creator_id: session.
+              }
+
+              res.send(safeSession);
             });
           });
         });
