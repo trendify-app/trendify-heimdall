@@ -51,7 +51,7 @@ All API requests require request body including the following...
 
 - `PUT | /sessions/join/:id`
   - Description
-    - Creates a session
+    - Join a session
   - Returns
     - 401 - Failed to authenticate
     - 200 - Success
