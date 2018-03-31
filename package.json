@@ -1,0 +1,26 @@
+{
+  "name": "trendify-gateway",
+  "version": "0.0.1",
+  "description": "hackathon project",
+  "main": "index.js",
+  "scripts": {
+    "generate-key": "openssl req -newkey rsa:2048 -new -nodes -x509 -days 3650 -keyout .cert/key.pem -out .cert/cert.pem"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/trendify-app/trendify-gateway.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/trendify-app/trendify-gateway/issues"
+  },
+  "homepage": "https://github.com/trendify-app/trendify-gateway#readme",
+  "dependencies": {
+    "cors": "^2.8.4",
+    "express": "^4.16.3",
+    "jsonwebtoken": "^8.2.0",
+    "mongodb": "^3.0.5",
+    "socket.io": "^2.1.0"
+  }
+}
