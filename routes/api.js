@@ -3,16 +3,16 @@
 
   const router = new express.Router();
 
-  const crypto = require('crypto');
+  const uniqueId = require('../helpers/unique-id');
+  const generateAccessToken = require('../helpers/generate-access-token');
   const ObjectID = require('mongodb').ObjectID;
 
-  const assert = require('assert');
-  const request = require('request');
   const jwt = require('jsonwebtoken');
 
   const JWT_SECRET = process.env.TRENDIFY_JWT_SECRET || 'secret';
 
   module.exports = (db, io) => {
+    console.log('[module] api/')
     const userSessions = db.collection('userSessions');
     const trendSessions = db.collection('trendSessions');
 
@@ -24,34 +24,33 @@
       });
     }
 
-    router.get('/authorize', (req, res) => {
-      const token = req.query.token;
-      validate(token)
-        .then(result => res.send(result))
-        .catch(error => res.status(401).send(error));
-    });
-
     // Get available sessions filterable by query params
     router.get('/sessions', (req, res) => {
-      const token = req.query.token
-      validate(token).then(identity =>
-        trendSessions.find({}).toArray((err, values) => {
-          res.send(values.map(v => {
-            return {
-              _id: v._id,
-              creator_id: v.creatorId
-            })
-          }))
+      trendSessions.find({}).toArray((error, values) => {
+        if (err) {
+          res.status(500).send(error);
+          return;
+        }
+
+        const sanitizedValues = values.map(value => {
+          return {
+            _id: v._id,
+            creator_id: v.creatorId
+          };
         })
-      )
+        res.send(sanitizedValues);
+      })
     });
 
     // Retrieve a specific session by unique identifier
     router.get('/sessions/:id', (req, res) => {
-      const token = req.query.token;
+      const {
+        authorization
+      } = req.headers;
+
       const trendSessionId = req.params.id;
 
-      validate(token)
+      validate(authorization)
         .then(identity => {
           trendSessions.findOne(
             { _id: new ObjectID(trendSessionId) },
@@ -61,17 +60,20 @@
     });
 
     router.delete('/sessions/:id', (req, res) => {
-      const token = req.query.token;
+      const {
+        authorization
+      } = req.headers;
+
       const trendSessionId = req.params.id;
 
-      validate(token)
+      validate(authorization)
         .then(identity => {
           trendSessions.findOne({ _id: new ObjectID(trendSessionId) }, (error, record) => {
             if (error) {
               res.sendStatus(404);
               return;
             }
-            if (record.creatorId === result.attributes.id) {
+            if (record.creatorId === identity.id) {
               db.collection('sessions').remove({_id: new ObjectID(sessionId)}, (_err, _record) => {
                 if (_err) {
                   res.status(401).send(_err);
@@ -88,73 +90,101 @@
 
     // Request will return session id
     router.post('/sessions/create', (req, res) => {
-      const body = req.body;
-      const token = req.query.token;
+      const {
+        body,
+        headers
+      } = req;
 
-      validate(token)
-        .then(identity => {
-          trendSessions.insertOne({
-            accessPasses: [],
-            persistedUsers: {},
-            creatorId: result.id
-          }).then(result => {
-            const trendSessionId = result.insertedId;
-            res.send({
-              room_id: trendSessionId
-            })
-          })
-        }).catch(error => res.status(401).send(error));
+      const {
+        authorization
+      } = headers;
+
+      const roomId = uniqueId();
+      const uniqueIdentifier = uniqueId(8);
+      const accessToken = authorization || generateAccessToken(uniqueIdentifier, roomId)
+
+      jwt.verify(accessToken, JWT_SECRET, (err, token) => {
+        if (err) {
+          res.status(401).send(err);
+          return;
+        }
+
+        trendSessions.insertOne({
+          id: roomId,
+          accessPasses: [],
+          persistedUsers: {},
+          creatorId: uniqueIdentifier
+        }).then(result => {
+          const trendSessionId = result.insertedId;
+          res.send({
+            room_id: trendSessionId,
+            access_token: accessToken
+          });
+        });
+
+      });
     });
+
     // Heimdall
     // Gateway into a socket
     // Grants access by generating a hallpass
     // https://www.w3.org/Protocols/rfc2616/rfc2616-sec9.html
-    router.put('/sessions/join', (req, res) => {
+    router.put('/sessions/join/:id', (req, res) => {
       const params = req.params;
+      const trendSessionId = params.id;
 
-      const token = req.query.token;
-      const trendSessionId = params.session_id;
+      const {
+        authorization
+      } = req.headers;
 
-      validate(token)
-        .then(identity => {
-          const accessPass = jwt.sign({
-            user_id: identity.id,
-            session_id: trendSessionId,
-            exp: Math.floor(Date.now() / 1000) - 30
-          }, JWT_SECRET);
+      let accessPass = generateAccessToken(uniqueId(8), trendSessionId);
 
-          const _query = {_id: new ObjectID(trendSessionId)}
+      if (authorization) {
+        const parsedAccessPass = jwt.verify(accessPass, JWT_SECRET);
 
-          trendSessions.findOne(_query, (error, record) => {
-            if (error) {
-              res.status(401).send(error);
-              return;
-            }
+        try {
+          const decodedProvidedToken = jwt.verify(authorization, JWT_SECRET);
+          accessPass = jwt.sign(
+            Object.assign(parsedAccessPass, decodedProvidedToken),
+            JWT_SECRET
+          );
+        } catch (err) {
+          res.status(401).send(error);
+          return;
+        }
+      }
 
-            const allowedUsers = record.accessPasses;
+      const _query = {_id: new ObjectID(trendSessionId)}
 
-            record.accessPasses.push(accessPass);
+      trendSessions.findOne(_query, (error, record) => {
+        if (error) {
+          res.status(401).send(error);
+          return;
+        }
 
-            trendSessions.update(query, session, (update_err) => {
-              if (update_err) {
-                res.status(401).send(update_error);
-                return;
-              }
+        const allowedUsers = record.accessPasses;
 
-              const safeSession: {
-                id: session.id,
-                access_pass: accessPass,
-                creator_id: session.
-              }
+        record.accessPasses.push(accessPass);
 
-              res.send(safeSession);
-            });
-          });
+        trendSessions.update(_query, record, (update_err) => {
+          if (update_err) {
+            res.status(401).send(update_error);
+            return;
+          }
+
+          const safeSession = {
+            id: record.id,
+            access_pass: accessPass,
+            creator_id: record.creatorId
+          }
+
+          res.send(safeSession);
         });
+      });
     });
 
     io.on('connection', socket => {
-      console.log(socket.id, 'has connected.')
+      console.log('[socket] - ', socket.id, 'has connected.')
 
       socket.on('handshake', accessPass => {
         validate(accessPass)

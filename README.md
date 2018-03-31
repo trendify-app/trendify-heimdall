@@ -2,9 +2,10 @@
 
 Heimdall serves as a platform for creating, and joining socket namespaces.
 
+
 ## API | `/api`
 
-All API requests require request body including the following...
+All API requests require request body including the following... (potentially out of date, read source!)
 
 ```
 {
@@ -12,12 +13,6 @@ All API requests require request body including the following...
 }
 ```
 
-- `GET | /authorize`
-  - Description
-    - Validates identity
-  - Returns
-    - 401 - Failed to authenticate
-    - 200 - Success
 - `GET | /sessions`
   - Description
     - List of sessions available to join

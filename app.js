@@ -24,22 +24,14 @@
   }
 
   const httpServer = http.createServer(app);
-  const httpsServer = https.createServer(config, app);
+  // const httpsServer = https.createServer(config, app);
 
-  const io = require('socket.io')(httpsServer)
+  const io = require('socket.io')(httpServer);
+
   io.set('transports', ['websocket', 'polling']);
 
   MongoClient.connect('mongodb://localhost:27017/trendify', (err, db) => {
     assert.equal(err, null)
-
-    const cleanup = (code) => {
-      db.close()
-      process.exit(1)
-    };
-
-    process.on('exit', () => cleanup(0));
-    process.on('SIGINT', () => cleanup(0));
-    process.on('uncaughtException', cleanup(1));
 
     const api = require('./routes/api')(db, io);
 
@@ -57,8 +49,8 @@
       .set('port', port)
   });
 
-  httpSerer.listen(port);
-  httpsServer.listen(443);
+  httpServer.listen(port);
+  // httpsServer.listen(443);
 
-  console.log(`Serving on port 8080 and 443`);
+  console.log(`[app] Serving on port 8080`);
 })();
