@@ -46,14 +46,14 @@ All API requests require request body including the following... (potentially ou
 
 - `PUT | /sessions/join/:id`
   - Description
-    - Creates a session
+    - Join a session
   - Returns
     - 401 - Failed to authenticate
     - 200 - Success
       ```
       {
-        id: session.id,
-        access_pass: accessPass,
-        creator_id: session.
+        id:
+        access_pass,
+        creator_id
       }
       ```
