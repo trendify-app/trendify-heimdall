@@ -4,7 +4,7 @@
   const router = new express.Router();
 
   const uniqueId = require('../helpers/unique-id');
-  const generateAccessToken = require('../helpers/generate-access-token');
+  const generateaccessPass = require('../helpers/generate-access-token');
   const callSaul = require('../helpers/call-saul');
   const nextWord = require('../helpers/next-word');
 
@@ -104,9 +104,9 @@
 
       const roomId = uniqueId(4);
       const uniqueIdentifier = uniqueId(4);
-      const accessToken = authorization || generateAccessToken(uniqueIdentifier, roomId)
+      const accessPass = authorization || generateaccessPass(uniqueIdentifier, roomId)
 
-      jwt.verify(accessToken, JWT_SECRET, (err, token) => {
+      jwt.verify(accessPass, JWT_SECRET, (err, token) => {
         if (err) {
           res.status(401).send(err);
           return;
@@ -131,7 +131,7 @@
         }).then(result => {
           res.send({
             room_id: roomId,
-            access_token: accessToken
+            access_token: accessPass
           });
         });
 
@@ -150,7 +150,7 @@
         authorization
       } = req.headers;
 
-      let accessPass = generateAccessToken(uniqueId(4), trendSessionId);
+      let accessPass = generateaccessPass(uniqueId(4), trendSessionId);
 
       if (authorization) {
         const parsedAccessPass = jwt.verify(accessPass, JWT_SECRET);
@@ -213,7 +213,7 @@
       console.log('[socket] - connection ', socket.id, 'has connected.')
 
       socket.on('handshake', accessPass => {
-        console.log('[socket] - handshake', ...arguments);
+        console.log('[socket] - handshake', accessPass);
         validate(accessPass)
           .then(response => {
             const {
@@ -378,7 +378,7 @@
       }
 
       socket.on('enroll', (accessPass, name) => {
-        console.log('[socket] - enroll', ...arguments);
+        console.log('[socket] - enroll', accessPass, name);
         jwt.verify(accessPass, JWT_SECRET, (error, identity) => {
           if (error) {
             console.log(error);
@@ -412,7 +412,7 @@
       });
 
       socket.on('game_start', (accessPass) => {
-        console.log('[socket] - game_start', ...arguments);
+        console.log('[socket] - game_start', accessPass);
         jwt.verify(accessPass, JWT_SECRET, (error, identity) => {
           if (error) {
             console.log(error);
@@ -435,7 +435,7 @@
       });
 
       socket.on('update_state', (accessPass, state) => {
-        console.log('[socket] - update_state', ...arguments);
+        console.log('[socket] - update_state', accessPass, state);
         jwt.verify(accessPass, JWT_SECRET, (error, identity) => {
           if (error) {
             console.log(error);
@@ -457,7 +457,7 @@
       });
 
       socket.on('vote', (accessPass, keyword) => {
-        console.log('[socket] - vote', ...arguments);
+        console.log('[socket] - vote', accessPass, keyword);
         jwt.verify(accessPass, JWT_SECRET, (error, identity) => {
           if (error) {
             console.log(error);
@@ -486,9 +486,9 @@
         });
       });
 
-      socket.on('exit', accessToken => {
-        console.log('[socket] - exit', ...arguments);
-        jwt.verify(accessToken, JWT_SECRET, (error, record) => {
+      socket.on('exit', accessPass => {
+        console.log('[socket] - exit', accessPass);
+        jwt.verify(accessPass, JWT_SECRET, (error, record) => {
           if (error) {
             return;
           }
