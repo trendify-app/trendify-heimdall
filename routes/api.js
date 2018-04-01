@@ -403,12 +403,13 @@
       });
 
       socket.on('game_start', (accessPass) => {
+        console.log('[event] game_start');
         jwt.verify(accessPass, JWT_SECRET, (error, identity) => {
           if (error) {
             console.log(error);
             return;
           }
-
+          console.log('[event] game_start | ', JSON.stringify(identity, null, 2))
           const {
             session_id,
             user_id
@@ -416,6 +417,7 @@
 
           const _query = { id: session_id };
           trendSessions.findOne(_query, (error, record) => {
+            console.log(user_id, record);
             if (user_id === record.creatorId) {
               update_state('round');
             }
@@ -488,20 +490,17 @@
           // Leave current room, and no longer maintain users hash
           socket.leave(session_id);
 
-          const _query = {id: session_id}
-          trendSessions.findOne(_query, (err, trendSession, r) => {
-            if (err || !trendSession) {
-            } else {
-              delete trendSession.persistedUsers[socket.id];
-              trendSessions.update(_query, trendSession);
-              setTimeout(
-                () => io.to(session_id).emit('update', {users: trendSession.persistedUsers}),
-                500
-              );
-            }
-          });
+          delete gameSessions[session_id].players[user_id];
 
-        })
+          const mappedPlayers = Object.keys(gameSessions[session_id].players)
+            .filter(uid => uid !== gameSessions[session_id].host_id)
+            .map(uid => gameSessions[session_id].players[uid]);
+
+          io.to(session_id).emit('update', {
+            type: 'users',
+            users: mappedPlayers
+          });
+        });
       });
 
     });
