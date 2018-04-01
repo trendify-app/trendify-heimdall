@@ -352,10 +352,13 @@
             .filter(uid => !!gameSessions[session_id].players[uid].vote)
             .map(uid => gameSessions[session_id].players[uid].vote);
 
+          if (mappedPlayerVotes.length < 2) {
+            mappedPlayerVotes.push(nextWord());
+          }
 
           console.log('update_state - callSaul', mappedPlayerVotes);
 
-          callSaul([...mappedPlayerVotes, gameSessions[session_id].challenge_word]).then(trendsApiResult => {
+          callSaul([...mappedPlayerVotes]).then(trendsApiResult => {
             let parsedTrendResults = {};
 
             try {
