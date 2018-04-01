@@ -21,6 +21,7 @@
     "cookie-parser": "^1.4.3",
     "cors": "^2.8.4",
     "express": "^4.16.3",
+    "faker": "^4.1.0",
     "jsonwebtoken": "^8.2.0",
     "lib": "^3.0.2",
     "mongodb": "^2.2.25",

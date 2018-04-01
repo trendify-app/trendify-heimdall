@@ -6,6 +6,7 @@
   const uniqueId = require('../helpers/unique-id');
   const generateAccessToken = require('../helpers/generate-access-token');
   const callSaul = require('../helpers/call-saul');
+  const nextWord = require('../helpers/next-word');
 
   const jwt = require('jsonwebtoken');
 
@@ -230,7 +231,7 @@
                 trendSession.persistedUsers[socket.id] = user_id;
 
                 if (trendSession.accessPasses.includes(accessPass)) {
-                  console.log(`${user_id} joined room ${session_id}`);
+                  console.log(`UserId[${user_id}] joined room ${session_id}`);
                   trendSessions.update(_query, trendSession);
                   // delete trendSession.hallpasses[hallpass]
                   socket.join(session_id);
@@ -315,6 +316,11 @@
           let endsAt = new Date();
           endsAt.setMilliseconds(endsAt.getMilliseconds() + roundTimeout)
           console.log(+endsAt)
+
+          io.to(session_id).emit('update', {
+            type: 'challenge',
+            word: nextWord()
+          });
 
           io.to(session_id).emit('update', {
             type: 'round_number',
