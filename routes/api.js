@@ -284,7 +284,7 @@
           }).catch(error => socket.emit('entry-fail', error))
       });
 
-      const update_state = (state) => {
+      const update_state = (state, session_id) => {
         gameSessions[session_id].state = state;
         io.to(session_id).emit('update', {
           type: 'state',
@@ -324,7 +324,7 @@
               state: 'intermission'
             });
           }, roundTimeout);
-          update_state('intermission');
+          update_state('intermission', session_id);
           return;
         }
 
@@ -419,7 +419,7 @@
           trendSessions.findOne(_query, (error, record) => {
             console.log(user_id, record);
             if (user_id === record.creatorId) {
-              update_state('round');
+              update_state('round', session_id);
             }
           });
 
@@ -441,7 +441,7 @@
           const _query = { id: session_id };
           trendSessions.findOne(_query, (error, record) => {
             if (user_id === record.creatorId) {
-              update_state(state);
+              update_state(state, session_id);
             }
           });
         });
