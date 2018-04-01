@@ -337,8 +337,11 @@
 
           gameSessions[session_id].challenge_word = challengeWord;
 
-          setTimeout(() =>
-            update_state('intermission', session_id), roundTimeout);
+
+          gameSessions[session_id].intermission_timeout = setTimeout(
+            () => update_state('intermission', session_id),
+            roundTimeout
+          );
           return;
         }
 
@@ -356,8 +359,8 @@
             try {
               parsedTrendResults = JSON.parse(trendsApiResult);
               console.log(parsedTrendResult);
-            } catch (e) {
-              console.log('error parsing trend results');
+            } catch (err) {
+              console.log('ParseError[Saul]', err);
             }
 
 
@@ -368,17 +371,22 @@
             mappedPlayerIds.forEach(uid => {
               const vote = gameSessions[session_id].players[uid].vote;
               const indexOfVote = mappedPlayerVotes.indexOf(vote);
-              const scoreForVote = parsedTrendResults.default.averages[indexOfVote];
+              const scoreForVote = parsedTrendResults.default.averages[indexOfVote] || 0;
 
               const oldScore = gameSessions[session_id].players[uid].score || 0;
               gameSessions[session_id].players[uid].score = oldScore + scoreForVote;
-            })
+            });
 
             const mappedUsers = Object.keys(gameSessions[session_id].players)
               .filter(uid => uid !== gameSessions[session_id].host_id)
               .map(uid => gameSessions[session_id].players[uid])
 
-            console.log(mappedUsers);
+            if (mappedUsers.every(user => user.vote)) {
+              clearTimeout(gameSessions[session_id].intermission_timeout);
+              update_state('intermission', session_id);
+            }
+
+            console.log('mappedUsers', mappedUsers);
 
             io.to(session_id).emit('update', {
               type: 'users',
