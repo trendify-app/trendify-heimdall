@@ -351,6 +351,16 @@
           console.log('update_state - callSaul', mappedPlayerVotes);
 
           callSaul(mappedPlayerVotes).then(trendsApiResult => {
+            let parsedTrendResults = {};
+
+            try {
+              parsedTrendResults = JSON.parse(trendsApiResult);
+              console.log(parsedTrendResult);
+            } catch (e) {
+              console.log('error parsing trend results');
+            }
+
+
             const mappedPlayerIds = Object.keys(gameSessions[session_id].players)
               .filter(uid => uid !== gameSessions[session_id].host_id)
               .filter(uid => !!gameSessions[session_id].players[uid].vote);
@@ -358,7 +368,7 @@
             mappedPlayerIds.forEach(uid => {
               const vote = gameSessions[session_id].players[uid].vote;
               const indexOfVote = mappedPlayerVotes.indexOf(vote);
-              const scoreForVote = trendsApiResult.default.averages[indexOfVote];
+              const scoreForVote = parsedTrendResults.default.averages[indexOfVote];
 
               const oldScore = gameSessions[session_id].players[uid].score || 0;
               gameSessions[session_id].players[uid].score = oldScore + scoreForVote;
@@ -378,7 +388,7 @@
             io.to(session_id).emit('update', {
               type: 'trend_data',
               labels: mappedPlayerVotes,
-              data: trendsApiResult
+              data: parsedTrendResults
             });
           });
 
