@@ -38,7 +38,7 @@
 
         const sanitizedValues = values.map(value => {
           return {
-            _id: v.id,
+            id: v.id,
             creator_id: v.creatorId
           };
         })
@@ -78,7 +78,7 @@
               return;
             }
             if (record.creatorId === identity.id) {
-              db.collection('sessions').remove({id: new ObjectID(trendSessionId)}, (_err, _record) => {
+              trendSessions.remove({id: new ObjectID(trendSessionId)}, (_err, _record) => {
                 if (_err) {
                   res.status(401).send(_err);
                   return;
@@ -114,7 +114,18 @@
         }
 
         gameSessions[roomId] = {
-          state: 'lobby'
+          state: 'lobby',
+          num_rounds: 5,
+          current_round: 0,
+          round_timeout: 60000,
+          players: {
+
+          },
+          round: {
+            submissions: {
+
+            }
+          }
         };
 
         trendSessions.insertOne({
@@ -204,7 +215,7 @@
             const _query = { id: new ObjectID(session_id) };
 
             trendSessions.findOne(_query, (err, trendSession, r) => {
-              console.log(trendSessionId, accessPass)
+              console.log(session_id, accessPass)
               if (err || !room) {
                 socket.emit('entry-fail')
               } else {
@@ -224,6 +235,11 @@
           }).catch(error => socket.emit('handshake-fail', error))
       });
 
+      const update_state = (state) => {
+        gameSessions[session_id].state = state;
+        io.to()
+      }
+
       socket.on('update_state', (accessPass, state) => {
         jwt.verify(accessPass, JWT_SECRET, (error, identity) => {
           if (error) {
@@ -238,7 +254,7 @@
           const _query = { id: ObjectID(session_id) };
           trendSessions.findOne(_query, (error, record) => {
             if (user_id === record.creatorId) {
-              gameSessions[session_id].state = state;
+              update_state(state);
             }
           });
         });
