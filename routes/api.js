@@ -358,11 +358,10 @@
 
             try {
               parsedTrendResults = JSON.parse(trendsApiResult);
-              console.log(parsedTrendResult);
+              console.log(parsedTrendResults);
             } catch (err) {
               console.log('ParseError[Saul]', err);
             }
-
 
             const mappedPlayerIds = Object.keys(gameSessions[session_id].players)
               .filter(uid => uid !== gameSessions[session_id].host_id)
@@ -381,12 +380,13 @@
               .filter(uid => uid !== gameSessions[session_id].host_id)
               .map(uid => gameSessions[session_id].players[uid])
 
-            if (mappedUsers.every(user => user.vote)) {
+            console.log('mappedUsers@before.every', mappedUsers);
+            if (mappedUsers.every(user => !!user.vote)) {
               clearTimeout(gameSessions[session_id].intermission_timeout);
               update_state('intermission', session_id);
             }
 
-            console.log('mappedUsers', mappedUsers);
+            console.log('mappedUsers@after.every', mappedUsers);
 
             io.to(session_id).emit('update', {
               type: 'users',
