@@ -507,8 +507,8 @@
             .filter(uid => uid !== gameSessions[session_id].host_id)
             .map(uid => gameSessions[session_id].players[uid]);
 
-          console.log('mappedUsers@before.every', mappedUsers);
-          if (mappedUsers.every(user => !!user.vote)) {
+          console.log('mappedPlayers@before.every', mappedPlayers);
+          if (mappedPlayers.every(user => !!user.vote)) {
             clearTimeout(gameSessions[session_id].intermission_timeout);
             update_state('intermission', session_id);
           }
