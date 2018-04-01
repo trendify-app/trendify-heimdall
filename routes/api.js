@@ -210,9 +210,10 @@
     });
 
     io.on('connection', socket => {
-      console.log('[socket] - ', socket.id, 'has connected.')
+      console.log('[socket] - connection ', socket.id, 'has connected.')
 
       socket.on('handshake', accessPass => {
+        console.log('[socket] - handshake', ...arguments);
         validate(accessPass)
           .then(response => {
             const {
@@ -377,6 +378,7 @@
       }
 
       socket.on('enroll', (accessPass, name) => {
+        console.log('[socket] - enroll', ...arguments);
         jwt.verify(accessPass, JWT_SECRET, (error, identity) => {
           if (error) {
             console.log(error);
@@ -410,7 +412,7 @@
       });
 
       socket.on('game_start', (accessPass) => {
-        console.log('[event] game_start');
+        console.log('[socket] - game_start', ...arguments);
         jwt.verify(accessPass, JWT_SECRET, (error, identity) => {
           if (error) {
             console.log(error);
@@ -429,11 +431,11 @@
               update_state('round', session_id);
             }
           });
-
-        })
-      })
+        });
+      });
 
       socket.on('update_state', (accessPass, state) => {
+        console.log('[socket] - update_state', ...arguments);
         jwt.verify(accessPass, JWT_SECRET, (error, identity) => {
           if (error) {
             console.log(error);
@@ -455,6 +457,7 @@
       });
 
       socket.on('vote', (accessPass, keyword) => {
+        console.log('[socket] - vote', ...arguments);
         jwt.verify(accessPass, JWT_SECRET, (error, identity) => {
           if (error) {
             console.log(error);
@@ -484,6 +487,7 @@
       });
 
       socket.on('exit', accessToken => {
+        console.log('[socket] - exit', ...arguments);
         jwt.verify(accessToken, JWT_SECRET, (error, record) => {
           if (error) {
             return;
