@@ -258,30 +258,30 @@
         });
       });
 
-      setInterval(() => {
-        trendSessions.find({}, (err, trendSessions, r) => {
-          trendSessions.forEach(trendSession => {
-            const _query = {id: trendSession.id}
-            const socketRoom = io.sockets.adapter.rooms[trendSession.id];
-
-            if (socketRoom) {
-              const clients = Object.keys(socketRoom.sockets);
-              const users = Object.keys(trendSession.persistedUsers);
-
-              users.forEach(userKey => {
-                if (!clients.includes(userKey)) {
-                  delete trendSession.persistedUsers[userKey];
-                }
-              });
-
-              trendSessions.update(_query, trendSession);
-              io.to(trendSession.id).emit('update', {
-                users: trendSession.persistedUsers
-              });
-            }
-          })
-        })
-      }, 20000);
+      // setInterval(() => {
+      //   trendSessions.find({}, (err, trendSessions, r) => {
+      //     trendSessions.forEach(trendSession => {
+      //       const _query = {id: trendSession.id}
+      //       const socketRoom = io.sockets.adapter.rooms[trendSession.id];
+      //
+      //       if (socketRoom) {
+      //         const clients = Object.keys(socketRoom.sockets);
+      //         const users = Object.keys(trendSession.persistedUsers);
+      //
+      //         users.forEach(userKey => {
+      //           if (!clients.includes(userKey)) {
+      //             delete trendSession.persistedUsers[userKey];
+      //           }
+      //         });
+      //
+      //         trendSessions.update(_query, trendSession);
+      //         io.to(trendSession.id).emit('update', {
+      //           users: trendSession.persistedUsers
+      //         });
+      //       }
+      //     })
+      //   })
+      // }, 20000);
 
       socket.on('exit', accessToken => {
         jwt.verify(accessToken, JWT_SECRET, (error, record) => {
