@@ -23,6 +23,14 @@
     cert: fs.readFileSync('.cert/cert.pem')
   }
 
+  process
+    .on('unhandledRejection', (reason, promise) => {
+      console.error(reason, 'unhandledRejection', promise)
+    }).on('uncaughtException', error => {
+      console.error(error, 'Uncaught Exception thrown');
+      // process.exit(1);
+    });
+
   const httpServer = http.createServer(app);
   // const httpsServer = https.createServer(config, app);
 
