@@ -220,10 +220,10 @@
                 trendSession.persistedUsers = trendSession.persistedUsers || {};
                 trendSession.persistedUsers[socket.id] = user_id;
 
-                if (room.accessPasses.includes(accessPass)) {
+                if (trendSession.accessPasses.includes(accessPass)) {
                   console.log(`${user_id} joined room ${session_id}`);
                   trendSessions.update(_query, trendSession);
-                  // delete room.hallpasses[hallpass]
+                  // delete trendSession.hallpasses[hallpass]
                   socket.join(session_id);
                 } else {
                   socket.emit('entry-fail')
@@ -262,7 +262,7 @@
         trendSessions.find({}, (err, trendSessions, r) => {
           trendSessions.forEach(trendSession => {
             const _query = {id: trendSession.id}
-            const socketRoom = io.sockets.adapter.rooms[room.id];
+            const socketRoom = io.sockets.adapter.rooms[trendSession.id];
 
             if (socketRoom) {
               const clients = Object.keys(socketRoom.sockets);
@@ -270,34 +270,47 @@
 
               users.forEach(userKey => {
                 if (!clients.includes(userKey)) {
-                  delete room.users[userKey];
+                  delete trendSession.persistedUsers[userKey];
                 }
               });
+
               trendSessions.update(_query, trendSession);
               io.to(trendSession.id).emit('update', {
-                users: room.users
+                users: trendSession.persistedUsers
               });
             }
           })
         })
       }, 20000);
 
-      socket.on('exit', session_id => {
-        // Leave current room, and no longer maintain users hash
-        socket.leave(session_id);
-
-        const _query = {id: session_id}
-        trendSessions.findOne(_query, (err, trendSession, r) => {
-          if (err || !room) {
-          } else {
-            delete room.users[socket.id];
-            trendSessions.update(_query, room);
-            setTimeout(
-              () => io.to(session_id).emit('update', {users: room.users}),
-              500
-            );
+      socket.on('exit', accessToken => {
+        jwt.verify(accessToken, JWT_SECRET, (error, record) => {
+          if (error) {
+            return;
           }
-        });
+
+          const {
+            user_id,
+            session_id
+          } = record;
+
+          // Leave current room, and no longer maintain users hash
+          socket.leave(session_id);
+
+          const _query = {id: session_id}
+          trendSessions.findOne(_query, (err, trendSession, r) => {
+            if (err || !trendSession) {
+            } else {
+              delete trendSession.persistedUsers[socket.id];
+              trendSessions.update(_query, trendSession);
+              setTimeout(
+                () => io.to(session_id).emit('update', {users: trendSession.persistedUsers}),
+                500
+              );
+            }
+          });
+
+        })
       });
 
     });
