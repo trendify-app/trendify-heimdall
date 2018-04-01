@@ -360,6 +360,16 @@
           player.vote = keyword;
 
           gameSessions[session_id].players[user_id] = player;
+
+          const mappedPlayers = Object.keys(gameSessions[session_id].players)
+            .filter(uid => uid !== gameSessions[session_id].host_id)
+            .map(uid => gameSessions[session_id].players[uid])
+
+          io.to(session_id).emit('update', {
+            type: 'users',
+            users: mappedPlayers
+          });
+          
         });
       });
 
