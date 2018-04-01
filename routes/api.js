@@ -231,7 +231,7 @@
                 }
               }
             });
-          }).catch(error => socket.emit('handshake-fail', error))
+          }).catch(error => socket.emit('entry-fail', error))
       });
 
       const update_state = (state) => {
@@ -247,6 +247,14 @@
 
         if (state === 'round') { // round start, play it through
           const roundTimeout = gameSessions[session_id].timeout;
+          const numberRounds = gameSessions[session_id].num_rounds;
+          const currentRound = gameSessions[session_id].current_round;
+
+          io.to(session_id).emit('update', {
+            type: 'round_number',
+            round_number: currentRound,
+            total_rounds: numberRounds
+          });
 
           io.to(session_id).emit('update', {
             type: 'round_timer_start',
@@ -277,9 +285,32 @@
         }
       }
 
+      socket.on('game_start', (accessPass) => {
+        jwt.verify(accessPass, JWT_SECRET, (error, identity) => {
+          if (error) {
+            console.log(error);
+            return;
+          }
+
+          const {
+            session_id,
+            user_id
+          } = identity;
+
+          const _query = { id: session_id };
+          trendSessions.findOne(_query, (error, record) => {
+            if (user_id === record.creatorId) {
+              update_state('round');
+            }
+          });
+
+        })
+      })
+
       socket.on('update_state', (accessPass, state) => {
         jwt.verify(accessPass, JWT_SECRET, (error, identity) => {
           if (error) {
+            console.log(error);
             return;
           }
 
@@ -297,30 +328,23 @@
         });
       });
 
-      // setInterval(() => {
-      //   trendSessions.find({}, (err, trendSessions, r) => {
-      //     trendSessions.forEach(trendSession => {
-      //       const _query = {id: trendSession.id}
-      //       const socketRoom = io.sockets.adapter.rooms[trendSession.id];
-      //
-      //       if (socketRoom) {
-      //         const clients = Object.keys(socketRoom.sockets);
-      //         const users = Object.keys(trendSession.persistedUsers);
-      //
-      //         users.forEach(userKey => {
-      //           if (!clients.includes(userKey)) {
-      //             delete trendSession.persistedUsers[userKey];
-      //           }
-      //         });
-      //
-      //         trendSessions.update(_query, trendSession);
-      //         io.to(trendSession.id).emit('update', {
-      //           users: trendSession.persistedUsers
-      //         });
-      //       }
-      //     })
-      //   })
-      // }, 20000);
+      socket.on('vote', (accessPass, keyword) => {
+        jwt.verify(accessPass, JWT_SECRET, (error, identity) => {
+          if (error) {
+            console.log(error);
+            return;
+          }
+
+          const {
+            session_id,
+            user_id
+          } = identity;
+
+          gameSessions[session_id].round.submissions[user_id] = {
+            keyword
+          }
+        });
+      });
 
       socket.on('exit', accessToken => {
         jwt.verify(accessToken, JWT_SECRET, (error, record) => {
