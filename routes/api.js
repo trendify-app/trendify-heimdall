@@ -323,7 +323,7 @@
           endsAt.setMilliseconds(endsAt.getMilliseconds() + roundTimeout)
           console.log(+endsAt)
 
-          const challengeWord = 'trump';
+          const challengeWord = nextWord();
 
           io.to(session_id).emit('update', {
             type: 'challenge',
