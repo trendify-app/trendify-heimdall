@@ -1,5 +1,5 @@
 {
-  "name": "trendify-gateway",
+  "name": "trendify-heimdall",
   "version": "0.0.1",
   "description": "hackathon project",
   "main": "index.js",

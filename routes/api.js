@@ -13,6 +13,8 @@
 
   const JWT_SECRET = process.env.TRENDIFY_JWT_SECRET || 'secret';
 
+  const gameSessions = {}
+
   module.exports = (db, io) => {
     console.log('[module] api/')
     const userSessions = db.collection('userSessions');
@@ -110,6 +112,10 @@
           res.status(401).send(err);
           return;
         }
+
+        gameSessions[roomId] = {
+          state: 'lobby'
+        };
 
         trendSessions.insertOne({
           id: roomId,
@@ -229,8 +235,13 @@
             user_id
           } = identity;
 
-
-        })
+          const _query = { id: ObjectID(session_id) };
+          trendSessions.findOne(_query, (error, record) => {
+            if (user_id === record.creatorId) {
+              gameSessions[session_id].state = state;
+            }
+          });
+        });
       });
 
       setInterval(() => {
@@ -262,7 +273,7 @@
         socket.leave(session_id);
 
         const _query = {id: new ObjectID(session_id)}
-        trendSessions.findOne(query, (err, trendSession, r) => {
+        trendSessions.findOne(_query, (err, trendSession, r) => {
           if (err || !room) {
           } else {
             delete room.users[socket.id];
