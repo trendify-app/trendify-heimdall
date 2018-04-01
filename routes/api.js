@@ -380,14 +380,6 @@
               .filter(uid => uid !== gameSessions[session_id].host_id)
               .map(uid => gameSessions[session_id].players[uid])
 
-            console.log('mappedUsers@before.every', mappedUsers);
-            if (mappedUsers.every(user => !!user.vote)) {
-              clearTimeout(gameSessions[session_id].intermission_timeout);
-              update_state('intermission', session_id);
-            }
-
-            console.log('mappedUsers@after.every', mappedUsers);
-
             io.to(session_id).emit('update', {
               type: 'users',
               users: mappedUsers
@@ -514,7 +506,13 @@
 
           const mappedPlayers = Object.keys(gameSessions[session_id].players)
             .filter(uid => uid !== gameSessions[session_id].host_id)
-            .map(uid => gameSessions[session_id].players[uid])
+            .map(uid => gameSessions[session_id].players[uid]);
+
+          console.log('mappedUsers@before.every', mappedUsers);
+          if (mappedUsers.every(user => !!user.vote)) {
+            clearTimeout(gameSessions[session_id].intermission_timeout);
+            update_state('intermission', session_id);
+          }
 
           io.to(session_id).emit('update', {
             type: 'users',
