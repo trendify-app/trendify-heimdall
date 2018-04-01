@@ -300,7 +300,10 @@
             .filter(uid => uid !== gameSessions[session_id].host_id)
             .filter(uid => !!gameSessions[session_id].players[uid].vote)
 
+          console.log(mappedPlayerIds);
+
           mappedPlayerIds.forEach(uid => {
+            console.log('update_state', 'gameSessions[session_id].players[uid]', gameSessions[session_id].players[uid])
             gameSessions[session_id].players[uid].vote = null;
           });
 
