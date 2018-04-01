@@ -214,7 +214,7 @@
 
             trendSessions.findOne(_query, (err, trendSession, r) => {
               console.log(session_id, accessPass)
-              if (err || !room) {
+              if (err || !trendSession) {
                 socket.emit('entry-fail')
               } else {
                 trendSession.persistedUsers = trendSession.persistedUsers || {};
