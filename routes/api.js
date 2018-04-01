@@ -191,7 +191,8 @@
           const safeSession = {
             id: record.id,
             access_pass: accessPass,
-            creator_id: record.creatorId
+            creator_id: record.creatorId,
+            user_id: jwt.verify(accessToken, JWT_SECRET).user_id
           }
 
           res.send(safeSession);
@@ -225,7 +226,22 @@
                   trendSessions.update(_query, trendSession);
                   // delete trendSession.hallpasses[hallpass]
                   socket.join(session_id);
-                  socket.emit('entry-success');
+                  socket.emit('entry-success', user_id);
+
+                  const player = gameSessions[session_id].players[user_id];
+
+                  if (player) {
+                    socket.emit('update', {
+                      type: 'user',
+                      name: player.name,
+                      user_id
+                    })
+                  } else {
+                    socket.emit('should-enroll', user_id);
+                  }
+
+
+
                 } else {
                   socket.emit('entry-fail')
                 }
@@ -250,22 +266,22 @@
           const numberRounds = gameSessions[session_id].num_rounds;
           const currentRound = gameSessions[session_id].current_round;
 
+          let endAt = new Date();
+          endsAt.setMilliseconds(endsAt.getMilliseconds() + roundTimeout)
+
           io.to(session_id).emit('update', {
             type: 'round_number',
             round_number: currentRound,
-            total_rounds: numberRounds
-          });
-
-          io.to(session_id).emit('update', {
-            type: 'round_timer_start',
-            timeout: roundTimeout
+            total_rounds: numberRounds,
+            ends_at: +endsAt
           });
 
           setTimeout(() => {
             io.to(session_id).emit('update', {
-              type: 'round_timer_end'
+              type: 'state',
+              state: 'intermission'
             });
-          }, roundTimeout)
+          }, roundTimeout);
           return;
         }
 
@@ -284,7 +300,7 @@
           return;
         }
       }
-
+      socket.on('enroll', (accessPass))
       socket.on('game_start', (accessPass) => {
         jwt.verify(accessPass, JWT_SECRET, (error, identity) => {
           if (error) {
@@ -340,9 +356,10 @@
             user_id
           } = identity;
 
-          gameSessions[session_id].round.submissions[user_id] = {
-            keyword
-          }
+          const player = gameSessions[session_id].players[user_id] || {};
+          player.vote = keyword;
+
+          gameSessions[session_id].players[user_id] = player;
         });
       });
 
