@@ -236,7 +236,45 @@
 
       const update_state = (state) => {
         gameSessions[session_id].state = state;
-        io.to()
+        io.to(session_id).emit('update', {
+          type: 'state',
+          state
+        });
+
+        if (state === 'lobby') {
+          return;
+        }
+
+        if (state === 'round') { // round start, play it through
+          const roundTimeout = gameSessions[session_id].timeout;
+
+          io.to(session_id).emit('update', {
+            type: 'round_timer_start',
+            timeout: roundTimeout
+          });
+
+          setTimeout(() => {
+            io.to(session_id).emit('update', {
+              type: 'round_timer_end'
+            });
+          }, roundTimeout)
+          return;
+        }
+
+        if (state === 'intermission') { // in between rounds
+          const roundTimeout = gameSessions[session_id].timeout;
+
+          io.to(session_id).emit('update', {
+            type: 'intermission_timer_start',
+            timeout: roundTimeout
+          });
+          setTimeout(() => {
+            io.to(session_id).emit('update', {
+              type: 'intermission_timer_end'
+            });
+          }, roundTimeout)
+          return;
+        }
       }
 
       socket.on('update_state', (accessPass, state) => {
