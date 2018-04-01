@@ -52,5 +52,5 @@
   httpServer.listen(port);
   // httpsServer.listen(443);
 
-  console.log(`[app] Serving on port 8080`);
+  console.log(`[app] Serving on port ${port}`);
 })();

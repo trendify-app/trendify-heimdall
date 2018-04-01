@@ -5,7 +5,7 @@
 
   const uniqueId = require('../helpers/unique-id');
   const generateAccessToken = require('../helpers/generate-access-token');
-  const saul = require('../helpers/call-saul');
+  const callSaul = require('../helpers/call-saul');
 
   const jwt = require('jsonwebtoken');
 
@@ -251,8 +251,8 @@
 
                   if (user_id === trendSession.creatorId) {
                       player = {
-                        name: 'host';
-                      }
+                        name: 'host'
+                      };
                       gameSessions[session_id].players[user_id] = player;
                   }
 
@@ -296,6 +296,14 @@
         }
 
         if (state === 'round') { // round start, play it through
+          const mappedPlayerIds = Object.keys(gameSessions)
+            .filter(uid => uid !== gameSessions[session_id].host_id)
+            .filter(uid => !!gameSessions[session_id].players[uid].vote)
+
+          mappedPlayerIds.forEach(uid => {
+            gameSessions[session_id].players[uid].vote = null;
+          });
+
           const roundTimeout = gameSessions[session_id].timeout;
           const numberRounds = gameSessions[session_id].num_rounds;
           const currentRound = gameSessions[session_id].current_round;
@@ -321,17 +329,42 @@
         }
 
         if (state === 'intermission') { // in between rounds
-          const roundTimeout = gameSessions[session_id].timeout;
+          const mappedPlayerVotes = Object.keys(gameSessions[session_id].players)
+            .filter(uid => uid !== gameSessions[session_id].host_id)
+            .filter(uid => !!gameSessions[session_id].players[uid].vote)
+            .map(uid => gameSessions[session_id].players[uid].vote)
 
-          io.to(session_id).emit('update', {
-            type: 'intermission_timer_start',
-            timeout: roundTimeout
-          });
-          setTimeout(() => {
+          callSaul(mappedPlayerVotes).then(trendsApiResult => {
+            const mappedPlayerIds = Object.keys(gameSessions)
+              .filter(uid => uid !== gameSessions[session_id].host_id)
+              .filter(uid => !!gameSessions[session_id].players[uid].vote)
+
+
+            mappedPlayerIds.forEach(uid => {
+              const vote = gameSessions[session_id].players[uid].vote;
+              const indexOfVote = mappedPlayerVotes.indexOf(vote);
+              const scoreForVote = trendsApiResult.default.averages[indexOfVote];
+
+              const oldScore = gameSessions[session_id].players[uid].score || 0;
+              gameSessions[session_id].players[uid].score = oldScore + scoreForVote;
+            })
+
+            const mappedUsers = Object.keys(gameSessions[session_id].players)
+              .filter(uid => uid !== gameSessions[session_id].host_id)
+              .map(uid => gameSessions[session_id].players[uid])
+
             io.to(session_id).emit('update', {
-              type: 'intermission_timer_end'
+              type: 'users',
+              users: mappedUsers
             });
-          }, roundTimeout)
+
+            io.to(session_id).emit('update', {
+              type: 'trend_data',
+              labels: mappedPlayerVotes,
+              data: trendsApiResult
+            });
+          });
+
           return;
         }
       }
