@@ -368,6 +368,8 @@
               .filter(uid => uid !== gameSessions[session_id].host_id)
               .map(uid => gameSessions[session_id].players[uid])
 
+            console.log(mappedUsers);
+
             io.to(session_id).emit('update', {
               type: 'users',
               users: mappedUsers
