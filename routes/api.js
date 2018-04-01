@@ -351,7 +351,7 @@
           console.log('update_state - callSaul', mappedPlayerVotes);
 
           callSaul(mappedPlayerVotes).then(trendsApiResult => {
-            const mappedPlayerIds = Object.keys(gameSessions)
+            const mappedPlayerIds = Object.keys(gameSessions[session_id].players)
               .filter(uid => uid !== gameSessions[session_id].host_id)
               .filter(uid => !!gameSessions[session_id].players[uid].vote);
 
