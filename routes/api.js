@@ -225,6 +225,7 @@
                   trendSessions.update(_query, trendSession);
                   // delete trendSession.hallpasses[hallpass]
                   socket.join(session_id);
+                  socket.emit('entry-success');
                 } else {
                   socket.emit('entry-fail')
                 }
