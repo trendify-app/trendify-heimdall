@@ -166,6 +166,7 @@
         }
       }
 
+      const parsedAccessPass = jwt.verify(accessPass, JWT_SECRET);
       const _query = { id: trendSessionId }
 
       trendSessions.findOne(_query, (error, record) => {
@@ -179,7 +180,7 @@
           num_rounds: 5,
           current_round: 0,
           round_timeout: 60000,
-          host_id: token.user_id,
+          host_id: record.creatorId,
           players: {
 
           }
@@ -199,7 +200,7 @@
             id: record.id,
             access_pass: accessPass,
             creator_id: record.creatorId,
-            user_id: jwt.verify(accessPass, JWT_SECRET).user_id
+            user_id: parsedAccessPass.user_id
           }
 
           res.send(safeSession);
@@ -234,6 +235,17 @@
                   // delete trendSession.hallpasses[hallpass]
                   socket.join(session_id);
                   socket.emit('entry-success', user_id);
+
+                  gameSessions[session_id] = gameSessions[session_id] || {
+                    state: 'lobby',
+                    num_rounds: 5,
+                    current_round: 0,
+                    round_timeout: 60000,
+                    host_id: trendSession.creatorId,
+                    players: {
+
+                    }
+                  };
 
                   const player = gameSessions[session_id].players[user_id];
 
