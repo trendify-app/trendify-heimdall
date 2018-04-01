@@ -247,7 +247,14 @@
                     }
                   };
 
-                  const player = gameSessions[session_id].players[user_id];
+                  let player = gameSessions[session_id].players[user_id];
+
+                  if (user_id === trendSession.creatorId) {
+                      player = {
+                        name: 'host';
+                      }
+                      gameSessions[session_id].players[user_id] = player;
+                  }
 
                   if (player) {
                     socket.emit('update', {
