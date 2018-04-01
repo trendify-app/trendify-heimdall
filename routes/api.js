@@ -337,7 +337,6 @@
 
           gameSessions[session_id].challenge_word = challengeWord;
 
-
           gameSessions[session_id].intermission_timeout = setTimeout(
             () => update_state('intermission', session_id),
             roundTimeout
@@ -518,7 +517,6 @@
             type: 'users',
             users: mappedPlayers
           });
-
         });
       });
 
