@@ -174,6 +174,17 @@
           return;
         }
 
+        gameSessions[trendSessionId] = gameSessions[trendSessionId] || {
+          state: 'lobby',
+          num_rounds: 5,
+          current_round: 0,
+          round_timeout: 60000,
+          host_id: token.user_id,
+          players: {
+
+          }
+        };
+
         const allowedUsers = record.accessPasses;
 
         record.accessPasses.push(accessPass);
