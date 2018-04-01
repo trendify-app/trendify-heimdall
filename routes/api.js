@@ -7,8 +7,6 @@
   const generateAccessToken = require('../helpers/generate-access-token');
   const saul = require('../helpers/call-saul');
 
-  const ObjectID = require('mongodb').ObjectID;
-
   const jwt = require('jsonwebtoken');
 
   const JWT_SECRET = process.env.TRENDIFY_JWT_SECRET || 'secret';
@@ -57,7 +55,7 @@
       validate(authorization)
         .then(identity => {
           trendSessions.findOne(
-            { id: new ObjectID(trendSessionId) },
+            { id: trendSessionId },
             (err, record) => res.send(record)
           )
         }).catch(error => res.status(401).send(error));
@@ -72,13 +70,13 @@
 
       validate(authorization)
         .then(identity => {
-          trendSessions.findOne({ id: new ObjectID(trendSessionId) }, (error, record) => {
+          trendSessions.findOne({ id: trendSessionId }, (error, record) => {
             if (error) {
               res.sendStatus(404);
               return;
             }
             if (record.creatorId === identity.id) {
-              trendSessions.remove({id: new ObjectID(trendSessionId)}, (_err, _record) => {
+              trendSessions.remove({id: trendSessionId}, (_err, _record) => {
                 if (_err) {
                   res.status(401).send(_err);
                   return;
@@ -172,7 +170,7 @@
         }
       }
 
-      const _query = {id: new ObjectID(trendSessionId)}
+      const _query = { id: trendSessionId }
 
       trendSessions.findOne(_query, (error, record) => {
         if (error) {
@@ -212,7 +210,7 @@
               session_id
             } = response;
 
-            const _query = { id: new ObjectID(session_id) };
+            const _query = { id: session_id };
 
             trendSessions.findOne(_query, (err, trendSession, r) => {
               console.log(session_id, accessPass)
@@ -251,7 +249,7 @@
             user_id
           } = identity;
 
-          const _query = { id: ObjectID(session_id) };
+          const _query = { id: session_id };
           trendSessions.findOne(_query, (error, record) => {
             if (user_id === record.creatorId) {
               update_state(state);
@@ -263,7 +261,7 @@
       setInterval(() => {
         trendSessions.find({}, (err, trendSessions, r) => {
           trendSessions.forEach(trendSession => {
-            const _query = {id: new ObjectID(trendSession.id)}
+            const _query = {id: trendSession.id}
             const socketRoom = io.sockets.adapter.rooms[room.id];
 
             if (socketRoom) {
@@ -288,7 +286,7 @@
         // Leave current room, and no longer maintain users hash
         socket.leave(session_id);
 
-        const _query = {id: new ObjectID(session_id)}
+        const _query = {id: session_id}
         trendSessions.findOne(_query, (err, trendSession, r) => {
           if (err || !room) {
           } else {
