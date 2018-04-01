@@ -296,7 +296,7 @@
         }
 
         if (state === 'round') { // round start, play it through
-          const mappedPlayerIds = Object.keys(gameSessions)
+          const mappedPlayerIds = Object.keys(gameSessions[session_id].players)
             .filter(uid => uid !== gameSessions[session_id].host_id)
             .filter(uid => !!gameSessions[session_id].players[uid].vote)
 
@@ -311,7 +311,7 @@
           const numberRounds = gameSessions[session_id].num_rounds;
           const currentRound = gameSessions[session_id].current_round;
 
-          let endAt = new Date();
+          let endsAt = new Date();
           endsAt.setMilliseconds(endsAt.getMilliseconds() + roundTimeout)
 
           io.to(session_id).emit('update', {
