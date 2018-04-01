@@ -116,13 +116,9 @@
           num_rounds: 5,
           current_round: 0,
           round_timeout: 60000,
+          host_id: token.user_id,
           players: {
 
-          },
-          round: {
-            submissions: {
-
-            }
           }
         };
 
@@ -130,7 +126,7 @@
           id: roomId,
           accessPasses: [],
           persistedUsers: {},
-          creatorId: uniqueIdentifier
+          creatorId: token.user_id
         }).then(result => {
           res.send({
             room_id: roomId,
@@ -369,7 +365,7 @@
             type: 'users',
             users: mappedPlayers
           });
-          
+
         });
       });
 
