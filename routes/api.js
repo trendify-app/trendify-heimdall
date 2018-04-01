@@ -188,7 +188,7 @@
             id: record.id,
             access_pass: accessPass,
             creator_id: record.creatorId,
-            user_id: jwt.verify(accessToken, JWT_SECRET).user_id
+            user_id: jwt.verify(accessPass, JWT_SECRET).user_id
           }
 
           res.send(safeSession);
@@ -286,6 +286,7 @@
               state: 'intermission'
             });
           }, roundTimeout);
+          update_state('intermission');
           return;
         }
 
