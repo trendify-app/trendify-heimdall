@@ -307,12 +307,14 @@
             gameSessions[session_id].players[uid].vote = null;
           });
 
-          const roundTimeout = gameSessions[session_id].timeout;
+          const roundTimeout = gameSessions[session_id].round_timeout;
           const numberRounds = gameSessions[session_id].num_rounds;
           const currentRound = gameSessions[session_id].current_round;
 
+          console.log('roundTimeout', roundTimeout);
           let endsAt = new Date();
           endsAt.setMilliseconds(endsAt.getMilliseconds() + roundTimeout)
+          console.log(+endsAt)
 
           io.to(session_id).emit('update', {
             type: 'round_number',
@@ -321,13 +323,8 @@
             ends_at: +endsAt
           });
 
-          setTimeout(() => {
-            io.to(session_id).emit('update', {
-              type: 'state',
-              state: 'intermission'
-            });
-          }, roundTimeout);
-          update_state('intermission', session_id);
+          setTimeout(() =>
+            update_state('intermission', session_id), roundTimeout);
           return;
         }
 
@@ -335,8 +332,9 @@
           const mappedPlayerVotes = Object.keys(gameSessions[session_id].players)
             .filter(uid => uid !== gameSessions[session_id].host_id)
             .filter(uid => !!gameSessions[session_id].players[uid].vote)
-            .map(uid => gameSessions[session_id].players[uid].vote)
+            .map(uid => gameSessions[session_id].players[uid].vote);
 
+          return;
           callSaul(mappedPlayerVotes).then(trendsApiResult => {
             const mappedPlayerIds = Object.keys(gameSessions)
               .filter(uid => uid !== gameSessions[session_id].host_id)
