@@ -118,6 +118,7 @@
           current_round: 0,
           round_timeout: 60000,
           host_id: token.user_id,
+          challenge_word: null,
           players: {
 
           }
@@ -182,6 +183,7 @@
           current_round: 0,
           round_timeout: 60000,
           host_id: record.creatorId,
+          challenge_word: null,
           players: {
 
           }
@@ -244,6 +246,7 @@
                     current_round: 0,
                     round_timeout: 60000,
                     host_id: trendSession.creatorId,
+                    challenge_word: null,
                     players: {
 
                     }
@@ -318,9 +321,11 @@
           endsAt.setMilliseconds(endsAt.getMilliseconds() + roundTimeout)
           console.log(+endsAt)
 
+          const challengeWord = nextWord();
+
           io.to(session_id).emit('update', {
             type: 'challenge',
-            word: nextWord()
+            word: challengeWord
           });
 
           io.to(session_id).emit('update', {
@@ -329,6 +334,8 @@
             total_rounds: numberRounds,
             ends_at: +endsAt
           });
+
+          gameSessions[session_id].challenge_word = challengeWord;
 
           setTimeout(() =>
             update_state('intermission', session_id), roundTimeout);
@@ -341,12 +348,12 @@
             .filter(uid => !!gameSessions[session_id].players[uid].vote)
             .map(uid => gameSessions[session_id].players[uid].vote);
 
-          return;
+          console.log('update_state - callSaul', mappedPlayerVotes);
+
           callSaul(mappedPlayerVotes).then(trendsApiResult => {
             const mappedPlayerIds = Object.keys(gameSessions)
               .filter(uid => uid !== gameSessions[session_id].host_id)
-              .filter(uid => !!gameSessions[session_id].players[uid].vote)
-
+              .filter(uid => !!gameSessions[session_id].players[uid].vote);
 
             mappedPlayerIds.forEach(uid => {
               const vote = gameSessions[session_id].players[uid].vote;
@@ -458,6 +465,7 @@
 
       socket.on('vote', (accessPass, keyword) => {
         console.log('[socket] - vote', accessPass, keyword);
+
         jwt.verify(accessPass, JWT_SECRET, (error, identity) => {
           if (error) {
             console.log(error);
@@ -468,6 +476,16 @@
             session_id,
             user_id
           } = identity;
+
+          const gameSession = gameSessions[session_id];
+
+          if (!keyword.includes(gameSession.challenge_word)) {
+            socket.emit('update', {
+              type: 'vote_failure',
+              attempt: keyword
+            })
+            return;
+          }
 
           const player = gameSessions[session_id].players[user_id] || {};
           player.vote = keyword;
