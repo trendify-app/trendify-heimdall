@@ -312,6 +312,8 @@
             gameSessions[session_id].players[uid].vote = null;
           });
 
+          gameSessions[session_id].challenge_word = null;
+
           const roundTimeout = gameSessions[session_id].round_timeout;
           const numberRounds = gameSessions[session_id].num_rounds;
           const currentRound = gameSessions[session_id].current_round;
