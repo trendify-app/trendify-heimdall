@@ -231,12 +231,20 @@
                       type: 'user',
                       name: player.name,
                       user_id
-                    })
+                    });
                   } else {
                     socket.emit('should-enroll', user_id);
                   }
 
+                  const mappedPlayers = Object.keys(gameSessions[session_id].players)
+                    .filter(uid => uid !== gameSessions[session_id].host_id)
+                    .filter(uid => !!gameSessions[session_id].players[uid].name)
+                    .map(uid => gameSessions[session_id].players[uid])
 
+                  io.to(session_id).emit('update', {
+                    type: 'users',
+                    users: mappedPlayers
+                  });
 
                 } else {
                   socket.emit('entry-fail')
@@ -296,7 +304,40 @@
           return;
         }
       }
-      socket.on('enroll', (accessPass))
+
+      socket.on('enroll', (accessPass, name) => {
+        jwt.verify(accessPass, JWT_SECRET, (error, identity) => {
+          if (error) {
+            console.log(error);
+            return;
+          }
+
+          const {
+            session_id,
+            user_id
+          } = identity;
+
+          const player = gameSessions[session_id].players[user_id] || {};
+          player.name = name;
+          gameSessions[session_id].players[user_id] = player;
+
+          const mappedPlayers = Object.keys(gameSessions[session_id].players)
+            .filter(uid => uid !== gameSessions[session_id].host_id)
+            .map(uid => gameSessions[session_id].players[uid])
+
+          socket.emit('update', {
+            type: 'user',
+            name: player.name,
+            user_id
+          });
+
+          io.to(session_id).emit('update', {
+            type: 'users',
+            users: mappedPlayers
+          });
+        })
+      });
+
       socket.on('game_start', (accessPass) => {
         jwt.verify(accessPass, JWT_SECRET, (error, identity) => {
           if (error) {
